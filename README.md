@@ -49,6 +49,8 @@ These settings include:
 * `SOCIAL_AUTH_KEYCLOAK_OIDC_SECRET`: Client secret of the WireCloud application
 * `SOCIAL_AUTH_KEYCLOAK_OIDC_GLOBAL_ROLE`: Whether the admin role is taken from the realm instead of from the client (default: `False`)
 
+If you're using Keycloak 17 or earlier, `SOCIAL_AUTH_KEYCLOAK_OIDC_URL` should include the `/auth` suffix, e.g. `https://keycloak.example.com/auth`.
+
 This plugin is able to map Keycloak roles into WireCloud groups. To enable it, you should enable the `realm roles` and the `client roles` mappings either for the wirecloud application or for the `roles` scope. This mapping should include role information on the ID token.
 
 Finally, to add backchannel logout support (Single Sign Off), the following code: `url('', include('wirecloud.keycloak.urls')),` has to be added inside the urlpatterns list defined on your `urls.py` file. Once done this, you can access the Keycloak console to configure the **Admin URL** of the WireCloud application to point into the following url: `http(s)://wirecloud.example.com/keycloak`.
