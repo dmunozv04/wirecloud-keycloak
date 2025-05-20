@@ -32,7 +32,7 @@ from wirecloud.keycloak.utils import get_user_model, get_group_model
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
 
-KEYCLOAK_OIDC_ENDPOINT = 'auth/realms/{}'
+KEYCLOAK_OIDC_ENDPOINT = 'realms/{}'
 
 
 class KeycloakOpenIdConnect(OpenIdConnectAuth):
