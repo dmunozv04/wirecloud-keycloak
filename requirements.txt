@@ -1,3 +1,4 @@
 wirecloud>=1.2.0,<1.5
 social-auth-core[openidconnect]<5.0.0
 social-auth-app-django<6.0.0
+python-jose<4.0.0
