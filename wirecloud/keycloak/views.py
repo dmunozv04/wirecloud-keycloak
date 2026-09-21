@@ -19,7 +19,7 @@
 
 import json
 import logging
-from urllib.parse import quote
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib.auth import logout as auth_logout, REDIRECT_FIELD_NAME
@@ -36,6 +36,18 @@ ALLOWED_ORIGINS = [portal['url'] for portal in getattr(settings, 'FIWARE_PORTALS
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
+
+
+def _get_id_token_hint(request):
+    try:
+        social_auth = request.user.social_auth.filter(provider='keycloak_oidc').first()
+    except AttributeError:
+        return None
+
+    if social_auth is None:
+        return None
+
+    return social_auth.extra_data.get('id_token')
 
 
 @require_GET
@@ -96,7 +108,18 @@ def logout(request):
             if url_is_safe:
                 next_page = url_next_page
 
-        keycloak_logout_url = backend.end_session_url() + '?redirect_uri=' + quote(request.build_absolute_uri(next_page))
+        logout_params = {
+            'post_logout_redirect_uri': request.build_absolute_uri(next_page),
+        }
+        client_id = getattr(settings, 'SOCIAL_AUTH_KEYCLOAK_OIDC_KEY', '')
+        if client_id:
+            logout_params['client_id'] = client_id
+
+        id_token_hint = _get_id_token_hint(request)
+        if id_token_hint:
+            logout_params['id_token_hint'] = id_token_hint
+
+        keycloak_logout_url = backend.end_session_url() + '?' + urlencode(logout_params)
         request.GET = {}
         return wirecloud_logout(request, next_page=keycloak_logout_url)
     else:

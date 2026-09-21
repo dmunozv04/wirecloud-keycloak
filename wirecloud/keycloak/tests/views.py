@@ -163,12 +163,40 @@ class KeycloakViewTestCase(TestCase):
         views.wirecloud_logout = MagicMock()
         views.get_absolute_reverse_url = MagicMock(return_value='https://example.com/')
         views.settings.LOGOUT_REDIRECT_URL = '/'
-        views.quote = MagicMock(return_value='https:%2F%2Fexample.com%2F')
+        views.settings.SOCIAL_AUTH_KEYCLOAK_OIDC_KEY = 'wirecloud'
 
         request = MagicMock(META=())
+        request.user.social_auth.filter.return_value.first.return_value = None
         response = views.logout(request)
 
-        views.wirecloud_logout.assert_called_once_with(request, next_page='https://accounts.example.com/logout?redirect_uri=https:%2F%2Fexample.com%2F')
+        views.wirecloud_logout.assert_called_once_with(
+            request,
+            next_page='https://accounts.example.com/logout?post_logout_redirect_uri=https%3A%2F%2Fexample.com%2F&client_id=wirecloud',
+        )
+        self.assertEqual(views.wirecloud_logout(), response)
+
+    @patch('django.conf.settings', new=MagicMock(FIWARE_PORTALS=()))
+    @patch('django.views.decorators.http.require_GET', new=get_decorator)
+    def test_logout_with_id_token_hint(self):
+        from wirecloud.keycloak import views
+        reload(views)
+
+        views.build_backend = MagicMock()
+        views.build_backend().end_session_url.return_value = 'https://accounts.example.com/logout'
+        views.wirecloud_logout = MagicMock()
+        views.settings.LOGOUT_REDIRECT_URL = '/'
+        views.settings.SOCIAL_AUTH_KEYCLOAK_OIDC_KEY = 'wirecloud'
+
+        request = MagicMock(META=())
+        request.user.social_auth.filter.return_value.first.return_value.extra_data = {
+            'id_token': 'signed-id-token',
+        }
+        response = views.logout(request)
+
+        views.wirecloud_logout.assert_called_once_with(
+            request,
+            next_page='https://accounts.example.com/logout?post_logout_redirect_uri=https%3A%2F%2Fexample.com%2F&client_id=wirecloud&id_token_hint=signed-id-token',
+        )
         self.assertEqual(views.wirecloud_logout(), response)
 
     @patch('django.conf.settings', new=MagicMock(FIWARE_PORTALS=()))
@@ -182,13 +210,17 @@ class KeycloakViewTestCase(TestCase):
         views.wirecloud_logout = MagicMock()
         views.get_absolute_reverse_url = MagicMock(return_value='https://example.com/')
         views.settings.LOGOUT_REDIRECT_URL = '/'
-        views.quote = MagicMock(return_value='https:%2F%2Fexample.com%3Fnext=http:%2F%2Fwww.google.es%2F')
+        views.settings.SOCIAL_AUTH_KEYCLOAK_OIDC_KEY = 'wirecloud'
         views.is_safe_url = MagicMock(return_value=True)
 
         request = MagicMock(META=(), GET={"next": "http://www.google.es"})
+        request.user.social_auth.filter.return_value.first.return_value = None
         response = views.logout(request)
 
-        views.wirecloud_logout.assert_called_once_with(request, next_page='https://accounts.example.com/logout?redirect_uri=https:%2F%2Fexample.com%3Fnext=http:%2F%2Fwww.google.es%2F')
+        views.wirecloud_logout.assert_called_once_with(
+            request,
+            next_page='https://accounts.example.com/logout?post_logout_redirect_uri=http%3A%2F%2Fwww.google.es&client_id=wirecloud',
+        )
         self.assertEqual(views.wirecloud_logout(), response)
 
     @patch('django.conf.settings', new=MagicMock(FIWARE_PORTALS=()))
@@ -202,13 +234,17 @@ class KeycloakViewTestCase(TestCase):
         views.wirecloud_logout = MagicMock()
         views.get_absolute_reverse_url = MagicMock(return_value='https://example.com/')
         views.settings.LOGOUT_REDIRECT_URL = '/'
-        views.quote = MagicMock(return_value='https:%2F%2Fexample.com%2F')
+        views.settings.SOCIAL_AUTH_KEYCLOAK_OIDC_KEY = 'wirecloud'
         views.is_safe_url = MagicMock(return_value=False)
 
         request = MagicMock(META=(), GET={"next": "http://www.google.es"})
+        request.user.social_auth.filter.return_value.first.return_value = None
         response = views.logout(request)
 
-        views.wirecloud_logout.assert_called_once_with(request, next_page='https://accounts.example.com/logout?redirect_uri=https:%2F%2Fexample.com%2F')
+        views.wirecloud_logout.assert_called_once_with(
+            request,
+            next_page='https://accounts.example.com/logout?post_logout_redirect_uri=https%3A%2F%2Fexample.com%2F&client_id=wirecloud',
+        )
         self.assertEqual(views.wirecloud_logout(), response)
 
     @patch('django.conf.settings', new=MagicMock(FIWARE_PORTALS=()))
