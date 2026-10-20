@@ -130,15 +130,30 @@ class KeycloakSocialAuthBackendTestCase(TestCase):
         self.assertEqual(params["client_session_state"], "a-session-id")
 
     @patch('wirecloud.keycloak.social_auth_backend.get_language')
-    def test_eauth_extra_arguments(self, get_language):
+    @patch('social_core.backends.open_id_connect.OpenIdConnectAuth.auth_extra_arguments', return_value={})
+    def test_eauth_extra_arguments(self, auth_extra_arguments, get_language):
         backend = self._mock_module()
-        params = backend.auth_extra_arguments()
+        for language in ('ca', 'es', 'en', 'pt-br'):
+            with self.subTest(language=language):
+                get_language.return_value = language
+                params = backend.auth_extra_arguments()
+
+                self.assertEqual(
+                    params,
+                    {
+                        "kc_locale": language,
+                        "ui_locales": language
+                    }
+                )
+
+    @patch('wirecloud.keycloak.social_auth_backend.get_language', return_value='ca')
+    @patch('social_core.backends.open_id_connect.OpenIdConnectAuth.auth_extra_arguments', return_value={'prompt': 'login'})
+    def test_auth_extra_arguments_preserves_parent_parameters(self, auth_extra_arguments, get_language):
+        backend = self._mock_module()
 
         self.assertEqual(
-            params,
-            {
-                "kc_locale": get_language()
-            }
+            backend.auth_extra_arguments(),
+            {'prompt': 'login', 'kc_locale': 'ca', 'ui_locales': 'ca'}
         )
 
     def test_class_params(self):

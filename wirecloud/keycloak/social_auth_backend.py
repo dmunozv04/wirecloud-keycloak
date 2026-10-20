@@ -80,6 +80,7 @@ class KeycloakOpenIdConnect(OpenIdConnectAuth):
     def auth_extra_arguments(self):
         params = super(KeycloakOpenIdConnect, self).auth_extra_arguments() or {}
         params['kc_locale'] = get_language()
+        params['ui_locales'] = params['kc_locale']
         return params
 
     def get_user_details(self, response):
